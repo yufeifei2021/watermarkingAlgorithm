@@ -1,0 +1,27 @@
+/node_modules
+/.env.local
+/.umirc.local.ts
+/config/config.local.ts
+coverage
+
+# dependencies
+/npm-debug.log*
+/yarn-error.log
+/package-lock.json
+
+# production
+/dist
+*.less.d.ts
+
+# misc
+.DS_Store
+
+# umi
+/src/.umi
+/src/.umi-production
+/src/.umi-test
+
+#IDE
+.vscode
+.idea
+.history

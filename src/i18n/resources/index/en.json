@@ -1,0 +1,4 @@
+{
+  "index.welcome": "Welcome to React and react-i18next {{name}}",
+  "common.userName": "User Name"
+}

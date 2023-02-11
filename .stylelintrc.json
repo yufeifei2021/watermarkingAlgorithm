@@ -1,0 +1,49 @@
+{
+  "extends": [
+    "stylelint-config-standard",
+    "stylelint-prettier/recommended",
+    "stylelint-config-prettier"
+  ],
+  "ignoreFiles": [
+    "src/assets/**/*",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.ts",
+    "**/*.png",
+    "**/*.css",
+    "**/*.json",
+    "src/pages/document.ejs"
+  ],
+  "rules": {
+    "property-no-unknown": [
+      true,
+      {
+        "ignoreProperties": ["composes", "compose-with"]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.less"],
+      "customSyntax": "postcss-less",
+      "rules": {
+        "no-missing-end-of-source-newline": null,
+        "selector-pseudo-class-no-unknown": [
+          true,
+          {
+            "ignorePseudoClasses": ["global", "local", "export"]
+          }
+        ],
+        "selector-class-pattern": "^([a-z][a-zA-Z0-9]+)|(([a-z][a-z0-9]*)(-[a-z0-9]+)*$)$",
+        "alpha-value-notation": null,
+        "color-function-notation": null,
+        "keyframes-name-pattern": "^[a-z][a-zA-Z0-9]+$",
+        "string-quotes": "single",
+        "selector-max-type": [
+          0,
+          { "severity": "warning", "ignoreTypes": ["/^revo-/", "/^revogr-/"] }
+        ]
+      }
+    }
+  ]
+}

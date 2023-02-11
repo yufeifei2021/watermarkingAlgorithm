@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+	<style>
+		.row-align {
+			display: flex;
+			flex-direction: row;
+			margin-top: 10px;
+		}
+		.row-align img,
+		.row-align canvas {
+			width: 300px;
+			margin-right: 10px;
+		}
+	</style>
+	<div>
+    <p id="loading-opencv-msg">Loading the Opencv ...</p>
+    <input type="file" id="file-upload"/>
+  </div>
+  <div class="row-align">
+    <img id="src-image" src="" alt="">
+  </div>
+  <div class="row-align">
+    <canvas id="yufeifei1" width="300"></canvas>
+		<canvas id="yufeifei2" width="300"></canvas>
+		<canvas id="yufeifei3" width="300"></canvas>
+		<canvas id="yufeifei4" width="300"></canvas>
+  </div>
+  <script src="opencv.js" async onload="onOpenCvReady();" type="text/javascript"></script>
+	<script>
+		(function() {
+			var fileUploadEl = document.getElementById('file-upload'),
+				srcImgEl = document.getElementById('src-image')
+			fileUploadEl.addEventListener("change", function (e) {
+				srcImgEl.src = URL.createObjectURL(e.target.files[0]);
+			}, false);
+			srcImgEl.onload = function () {
+			// 傅里叶变换
+				// 读入图像
+				let src = cv.imread(srcImgEl);
+				// 利用cvtColor将图像转成单通道的灰度图，傅里叶变换只能处理单通道，否则会报错
+				cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
+				// 获取傅里叶变换时最优的尺寸（调整尺寸可以使傅里叶变换的速度更快，即当图像的尺寸是2， 3，5的整数倍时，计算速度最快）
+				let optimalRows = cv.getOptimalDFTSize(src.rows);
+				let optimalCols = cv.getOptimalDFTSize(src.cols);
+				let s0 = cv.Scalar.all(0);
+				let padded = new cv.Mat();
+				// // 填充图像，即上面的得到尺寸比原图大，需要用0填充增加的边缘部分的像素
+				cv.copyMakeBorder(src, padded, 0, optimalRows - src.rows, 0, optimalCols - src.cols, cv.BORDER_CONSTANT, s0);
+				// 傅立叶变换的结果是复数，对原图像进行傅里叶变换后得到的是复数，因此为傅立叶变换的结果(实部和虚部)分配存储空间。并且由于频域值范围远远超过空间值范围(0~255)，因此要用float来存储，下面的cv.CV_32F就是opencv.js中的float宏
+				let plane0 = new cv.Mat();
+				padded.convertTo(plane0, cv.CV_32F);
+				let planes = new cv.MatVector();
+				let complexI = new cv.Mat();
+				let plane1 = new cv.Mat.zeros(padded.rows, padded.cols, cv.CV_32F);
+				planes.push_back(plane0);
+				planes.push_back(plane1);
+				cv.merge(planes, complexI);
+				// 原地傅里叶变换，即变换后的结果仍存储在当前变量
+				cv.dft(complexI, complexI);
+				// 将复数转换为幅度。并且由于幅度值范围很大，不适合在屏幕上显示，因此进行对数处理
+				cv.split(complexI, planes);
+				cv.magnitude(planes.get(0), planes.get(1), planes.get(0));
+				let mag = planes.get(0);
+				let m1 = new cv.Mat.ones(mag.rows, mag.cols, mag.type());
+				cv.add(mag, m1, mag);
+				cv.log(mag, mag);
+				// 将最开始添加的像素剔除
+				let rect = new cv.Rect(0, 0, mag.cols & -2, mag.rows & -2);
+				mag = mag.roi(rect);
+				// 重新按照象限来排列图像，使得亮部集中在中心
+				let cx = mag.cols / 2;
+				let cy = mag.rows / 2;
+				let tmp = new cv.Mat();
+				let rect0 = new cv.Rect(0, 0, cx, cy);
+				let rect1 = new cv.Rect(cx, 0, cx, cy);
+				let rect2 = new cv.Rect(0, cy, cx, cy);
+				let rect3 = new cv.Rect(cx, cy, cx, cy);
+				let q0 = mag.roi(rect0);
+				let q1 = mag.roi(rect1);
+				let q2 = mag.roi(rect2);
+				let q3 = mag.roi(rect3);
+				// exchange 1 and 4 quadrants
+				q0.copyTo(tmp);
+				q3.copyTo(q0);
+				tmp.copyTo(q3);
+				// exchange 2 and 3 quadrants
+				q1.copyTo(tmp);
+				q2.copyTo(q1);
+				tmp.copyTo(q2);
+				// 归一化，把幅度值归一化到float 0~1的范围
+				cv.normalize(mag, mag, 0, 1, cv.NORM_MINMAX);
+				// 展示傅里叶转换的频域结果图像（注：对于float类型的图像，opencv会将float0~1的范围映射到0~255，也即浮点数乘以255，从而展示出来）
+				cv.imshow("yufeifei1", mag);
+			
+			
+				// 添加水印
+				const waterMask = "water_Mask";
+				let scalar = new cv.Scalar(0,0,0);
+				let point = new cv.Point(40,40);
+				// 在图中插入文字
+				cv.putText(mag,waterMask,point,cv.FONT_HERSHEY_DUPLEX,1.0,scalar);// 1.0是插入的字体的大小
+				cv.flip(mag,mag,-1);// 翻转操作，然后再加一次文字
+				cv.putText(mag,waterMask,point,cv.FONT_HERSHEY_DUPLEX,1.0,scalar);
+				cv.flip(mag,mag,-1);
+				cv.imshow("yufeifei2", mag);
+
+			
+				let src1 = cv.imread(srcImgEl);
+				// 设置存储3种颜色的矩阵vector
+				let colors = new cv.MatVector();
+				// 分离图像的3个通道到vector中
+				cv.split(src1,colors);
+				// 注意opencv是顺序是BGR，不是RGB，因此colors.get(0)是蓝色通道
+				let B = colors.get(0)
+				let G = colors.get(1)
+				let R = colors.get(2)
+				// 逆傅里叶变换 
+				let ifft = new cv.Mat();
+				cv.dft(complexI, ifft, (cv.DFT_REAL_OUTPUT | cv.DFT_INVERSE));
+				cv.normalize(ifft, ifft, 0, 1, cv.NORM_MINMAX);
+				// 下面把前面分离出来的颜色通道合并回去，否则图像会是灰色的
+				ifft.convertTo(B, cv.CV_8U, 255.0);
+				cv.imshow("yufeifei3", ifft);
+
+				let toMerge = new cv.MatVector();
+				// 删除傅里叶变换最开始增加的padding
+				let resB = B.roi(new cv.Rect(0, 0, optimalCols, optimalRows));
+				toMerge.push_back(resB);
+				toMerge.push_back(resG);
+				toMerge.push_back(resR);
+				cv.merge(toMerge, resB);
+				cv.imshow("yufeifei4", resB);
+
+			}
+
+
+			// opencv loaded?
+			window.onOpenCvReady = function () {
+				document.getElementById('loading-opencv-msg').remove();
+			}
+		})()
+	</script> 
+</body>
+</html>
