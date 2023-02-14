@@ -19,16 +19,17 @@
   },
   "dependencies": {
     "@aloudata/aloudata-design": "0.4.0-beta.11",
+    "@anpanman/opencv_ts": "^1.0.2",
     "axios": "^0.27.2",
     "i18next": "^21.9.0",
+    "jimp": "^0.16.1",
     "lodash": "^4.17.21",
     "query-string": "^7.1.1",
     "recoil": "^0.7.4",
     "umi": "^4.0.8",
     "video.js": "^7.20.3",
     "web-digital-watermarking": "^0.0.6",
-    "@anpanman/opencv_ts": "^1.0.2",
-    "jimp": "^0.16.1"
+    "yarn": "^1.22.19"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.5",
